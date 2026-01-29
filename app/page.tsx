@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import SwimLane from '@/components/SwimLane';
 import CreateCardModal from '@/components/CreateCardModal';
 import CardDetailModal from '@/components/CardDetailModal';
+import SprintMetrics from '@/components/SprintMetrics';
 import { 
   getSprints, 
   saveSprints, 
@@ -260,16 +261,42 @@ export default function Home() {
         {/* Board */}
         <main className="flex-1 overflow-x-auto p-6">
           {selectedSprintId ? (
-            <div className="flex gap-4 min-w-max">
-              {statusOrder.map(status => (
-                <SwimLane
-                  key={status}
-                  status={status}
-                  tasks={tasksByStatus[status]}
-                  onCardClick={handleCardClick}
-                />
-              ))}
-            </div>
+            <>
+              {/* Sprint Metrics */}
+              {currentSprint && (() => {
+                const sprintTasks = tasks.filter(t => t.sprintId === currentSprint.id);
+                const completedTasks = sprintTasks.filter(t => t.status === 'done').length;
+                const inProgressTasks = sprintTasks.filter(t => t.status !== 'done' && t.status !== 'todo').length;
+                const velocity = sprintTasks
+                  .filter(t => t.status === 'done')
+                  .reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+
+                const metrics = {
+                  sprintId: currentSprint.id,
+                  totalTasks: sprintTasks.length,
+                  completedTasks,
+                  inProgressTasks,
+                  blockedTasks: 0,
+                  velocity,
+                  burndown: [],
+                  teamVelocity: velocity,
+                };
+
+                return <SprintMetrics sprint={currentSprint} metrics={metrics} />;
+              })()}
+
+              {/* Swim Lanes Board */}
+              <div className="flex gap-4 min-w-max mt-6">
+                {statusOrder.map(status => (
+                  <SwimLane
+                    key={status}
+                    status={status}
+                    tasks={tasksByStatus[status]}
+                    onCardClick={handleCardClick}
+                  />
+                ))}
+              </div>
+            </>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
