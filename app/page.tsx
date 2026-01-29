@@ -82,6 +82,29 @@ export default function Home() {
     ? sprints.find(s => s.id === selectedSprintId)
     : null;
 
+  // Calculate sprint metrics
+  const sprintMetrics = useMemo(() => {
+    if (!currentSprint) return null;
+    
+    const sprintTasks = tasks.filter(t => t.sprintId === currentSprint.id);
+    const completedTasks = sprintTasks.filter(t => t.status === 'done').length;
+    const inProgressTasks = sprintTasks.filter(t => t.status !== 'done' && t.status !== 'todo').length;
+    const velocity = sprintTasks
+      .filter(t => t.status === 'done')
+      .reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+
+    return {
+      sprintId: currentSprint.id,
+      totalTasks: sprintTasks.length,
+      completedTasks,
+      inProgressTasks,
+      blockedTasks: 0,
+      velocity,
+      burndown: [],
+      teamVelocity: velocity,
+    };
+  }, [currentSprint, tasks]);
+
   const handleCreateTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'statusHistory' | 'comments' | 'attachments'>) => {
     const newTask: Task = {
       ...taskData,
@@ -263,27 +286,9 @@ export default function Home() {
           {selectedSprintId ? (
             <>
               {/* Sprint Metrics */}
-              {currentSprint && (() => {
-                const sprintTasks = tasks.filter(t => t.sprintId === currentSprint.id);
-                const completedTasks = sprintTasks.filter(t => t.status === 'done').length;
-                const inProgressTasks = sprintTasks.filter(t => t.status !== 'done' && t.status !== 'todo').length;
-                const velocity = sprintTasks
-                  .filter(t => t.status === 'done')
-                  .reduce((sum, t) => sum + (t.storyPoints || 0), 0);
-
-                const metrics = {
-                  sprintId: currentSprint.id,
-                  totalTasks: sprintTasks.length,
-                  completedTasks,
-                  inProgressTasks,
-                  blockedTasks: 0,
-                  velocity,
-                  burndown: [],
-                  teamVelocity: velocity,
-                };
-
-                return <SprintMetrics sprint={currentSprint} metrics={metrics} />;
-              })()}
+              {currentSprint && sprintMetrics && (
+                <SprintMetrics sprint={currentSprint} metrics={sprintMetrics} />
+              )}
 
               {/* Swim Lanes Board */}
               <div className="flex gap-4 min-w-max mt-6">
