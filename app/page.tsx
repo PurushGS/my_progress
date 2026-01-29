@@ -14,10 +14,11 @@ import {
   saveTasks, 
   addTask, 
   updateTask,
-  initializeStorage,
   getCurrentUser,
-  setCurrentUser
-} from '@/lib/storage';
+  setCurrentUser,
+  subscribeToSprints,
+  subscribeToTasks
+} from '@/lib/supabase-storage';
 import { generateSprintPresentation } from '@/lib/presentation';
 import { format } from 'date-fns';
 
@@ -33,13 +34,30 @@ export default function Home() {
   const [currentUser, setCurrentUserState] = useState('User');
 
   useEffect(() => {
-    initializeStorage();
-    // Refresh data after initialization (in case dummy data was cleared)
-    const refreshedSprints = getSprints();
-    const refreshedTasks = getTasks();
-    setSprints(refreshedSprints);
-    setTasks(refreshedTasks);
-    setCurrentUserState(getCurrentUser());
+    // Load initial data
+    const loadData = async () => {
+      const refreshedSprints = await getSprints();
+      const refreshedTasks = await getTasks();
+      setSprints(refreshedSprints);
+      setTasks(refreshedTasks);
+      setCurrentUserState(getCurrentUser());
+    };
+
+    loadData();
+
+    // Subscribe to real-time updates
+    const unsubscribeSprints = subscribeToSprints((updatedSprints) => {
+      setSprints(updatedSprints);
+    });
+
+    const unsubscribeTasks = subscribeToTasks((updatedTasks) => {
+      setTasks(updatedTasks);
+    });
+
+    return () => {
+      unsubscribeSprints();
+      unsubscribeTasks();
+    };
   }, []);
 
   // Clear selected sprint if it no longer exists
@@ -105,7 +123,7 @@ export default function Home() {
     };
   }, [currentSprint, tasks]);
 
-  const handleCreateTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'statusHistory' | 'comments' | 'attachments'>) => {
+  const handleCreateTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'statusHistory' | 'comments' | 'attachments'>) => {
     const newTask: Task = {
       ...taskData,
       id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -116,16 +134,20 @@ export default function Home() {
       attachments: [],
     };
 
-    addTask(newTask);
-    setTasks(prevTasks => [...prevTasks, newTask]);
+    await addTask(newTask);
+    // Real-time subscription will update the UI automatically
+    const updatedTasks = await getTasks();
+    setTasks(updatedTasks);
   };
 
-  const handleUpdateTask = (updatedTask: Task) => {
-    updateTask(updatedTask);
-    setTasks(prevTasks => prevTasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+  const handleUpdateTask = async (updatedTask: Task) => {
+    await updateTask(updatedTask);
+    // Real-time subscription will update the UI automatically
+    const updatedTasks = await getTasks();
+    setTasks(updatedTasks);
   };
 
-  const handleMoveToNextSprint = (task: Task) => {
+  const handleMoveToNextSprint = async (task: Task) => {
     const currentSprint = sprints.find(s => s.id === task.sprintId);
     if (!currentSprint) {
       alert('Current sprint not found');
@@ -160,7 +182,7 @@ export default function Home() {
         },
       ],
     };
-    handleUpdateTask(updatedTask);
+    await handleUpdateTask(updatedTask);
     alert(`Card moved to ${nextSprint.name}`);
   };
 
@@ -195,7 +217,7 @@ export default function Home() {
     generateSprintPresentation(currentSprint, sprintTasks, metrics);
   };
 
-  const handleCreateSprint = () => {
+  const handleCreateSprint = async () => {
     // Calculate sprint number based on existing sprints
     const existingSprintNumbers = sprints
       .map(s => {
@@ -222,8 +244,10 @@ export default function Home() {
     };
 
     const updatedSprints = [...sprints, newSprint];
-    saveSprints(updatedSprints);
-    setSprints(updatedSprints);
+    await saveSprints(updatedSprints);
+    // Real-time subscription will update the UI automatically
+    const refreshedSprints = await getSprints();
+    setSprints(refreshedSprints);
     setSelectedSprintId(newSprint.id);
   };
 

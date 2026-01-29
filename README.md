@@ -17,6 +17,7 @@ A minimalistic, card-based project management dashboard for tracking sprints and
 
 - Node.js 18+ 
 - npm or yarn
+- Supabase account (for team collaboration - optional, falls back to localStorage)
 
 ### Installation
 
@@ -25,12 +26,18 @@ A minimalistic, card-based project management dashboard for tracking sprints and
 npm install
 ```
 
-2. Run the development server:
+2. **Set up Supabase (for team collaboration):**
+   - See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for detailed instructions
+   - Create a Supabase project and run the SQL schema
+   - Add environment variables to `.env.local`
+   - **Note**: Without Supabase, data is stored locally in each browser (not shared)
+
+3. Run the development server:
 ```bash
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ## Deployment (Free Hosting)
 
