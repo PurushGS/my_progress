@@ -44,9 +44,11 @@ function saveLocalTasks(tasks: Task[]): void {
 // Supabase functions
 export async function getSprints(): Promise<Sprint[]> {
   if (!useSupabase) {
+    console.log('📦 Using localStorage (Supabase not configured)');
     return getLocalSprints();
   }
 
+  console.log('🔍 Fetching sprints from Supabase...');
   try {
     const { data, error } = await supabase!
       .from('sprints')
@@ -54,36 +56,51 @@ export async function getSprints(): Promise<Sprint[]> {
       .order('startDate', { ascending: false });
 
     if (error) {
-      console.error('Error fetching sprints:', error);
+      console.error('❌ Error fetching sprints from Supabase:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Error details:', error.details);
+      console.log('📦 Falling back to localStorage');
       return getLocalSprints(); // Fallback
     }
 
+    console.log(`✅ Fetched ${data?.length || 0} sprints from Supabase`);
     return (data || []).map((sprint: any) => ({
       ...sprint,
       startDate: sprint.startDate,
       endDate: sprint.endDate,
     })) as Sprint[];
   } catch (error) {
-    console.error('Error in getSprints:', error);
+    console.error('❌ Exception in getSprints:', error);
+    console.log('📦 Falling back to localStorage');
     return getLocalSprints(); // Fallback
   }
 }
 
 export async function saveSprints(sprints: Sprint[]): Promise<void> {
   if (!useSupabase) {
+    console.log('📦 Saving sprints to localStorage (Supabase not configured)');
     saveLocalSprints(sprints);
     return;
   }
 
+  console.log(`💾 Saving ${sprints.length} sprints to Supabase...`);
   try {
     if (sprints.length > 0) {
-      const { error: insertError } = await supabase!
+      const { data, error: insertError } = await supabase!
         .from('sprints')
         .upsert(sprints, { onConflict: 'id' });
 
       if (insertError) {
-        console.error('Error saving sprints:', insertError);
+        console.error('❌ Error saving sprints to Supabase:', insertError);
+        console.error('Error code:', insertError.code);
+        console.error('Error message:', insertError.message);
+        console.error('Error details:', insertError.details);
+        console.error('Error hint:', insertError.hint);
+        console.log('📦 Falling back to localStorage');
         saveLocalSprints(sprints); // Fallback
+      } else {
+        console.log(`✅ Successfully saved ${sprints.length} sprints to Supabase`);
       }
     } else {
       // If empty array, clear all sprints
@@ -93,11 +110,14 @@ export async function saveSprints(sprints: Sprint[]): Promise<void> {
         .neq('id', '');
 
       if (deleteError) {
-        console.error('Error deleting sprints:', deleteError);
+        console.error('❌ Error deleting sprints:', deleteError);
+      } else {
+        console.log('✅ Cleared all sprints from Supabase');
       }
     }
   } catch (error) {
-    console.error('Error in saveSprints:', error);
+    console.error('❌ Exception in saveSprints:', error);
+    console.log('📦 Falling back to localStorage');
     saveLocalSprints(sprints); // Fallback
   }
 }
@@ -166,25 +186,36 @@ export async function saveTasks(tasks: Task[]): Promise<void> {
 
 export async function addTask(task: Task): Promise<void> {
   if (!useSupabase) {
+    console.log('📦 Adding task to localStorage (Supabase not configured)');
     const tasks = getLocalTasks();
     tasks.push(task);
     saveLocalTasks(tasks);
     return;
   }
 
+  console.log(`💾 Adding task "${task.title}" to Supabase...`);
   try {
-    const { error } = await supabase!
+    const { data, error } = await supabase!
       .from('tasks')
-      .insert(task);
+      .insert(task)
+      .select();
 
     if (error) {
-      console.error('Error adding task:', error);
+      console.error('❌ Error adding task to Supabase:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
+      console.log('📦 Falling back to localStorage');
       const tasks = getLocalTasks();
       tasks.push(task);
       saveLocalTasks(tasks); // Fallback
+    } else {
+      console.log(`✅ Successfully added task "${task.title}" to Supabase`);
     }
   } catch (error) {
-    console.error('Error in addTask:', error);
+    console.error('❌ Exception in addTask:', error);
+    console.log('📦 Falling back to localStorage');
     const tasks = getLocalTasks();
     tasks.push(task);
     saveLocalTasks(tasks); // Fallback

@@ -19,6 +19,8 @@ import {
   subscribeToSprints,
   subscribeToTasks
 } from '@/lib/supabase-storage';
+import { testSupabaseConnection } from '@/lib/supabase';
+import { runDiagnostics } from '@/lib/supabase-diagnostics';
 import { generateSprintPresentation } from '@/lib/presentation';
 import { format } from 'date-fns';
 
@@ -34,6 +36,19 @@ export default function Home() {
   const [currentUser, setCurrentUserState] = useState('User');
 
   useEffect(() => {
+    // Test Supabase connection on mount
+    const testConnection = async () => {
+      const isConnected = await testSupabaseConnection();
+      if (!isConnected) {
+        console.warn('⚠️ Supabase connection failed. Running full diagnostics...');
+        await runDiagnostics();
+      } else {
+        // Run diagnostics anyway to verify tables exist
+        await runDiagnostics();
+      }
+    };
+    testConnection();
+
     // Load initial data
     const loadData = async () => {
       const refreshedSprints = await getSprints();
@@ -47,10 +62,12 @@ export default function Home() {
 
     // Subscribe to real-time updates
     const unsubscribeSprints = subscribeToSprints((updatedSprints) => {
+      console.log('🔄 Real-time update: sprints changed');
       setSprints(updatedSprints);
     });
 
     const unsubscribeTasks = subscribeToTasks((updatedTasks) => {
+      console.log('🔄 Real-time update: tasks changed');
       setTasks(updatedTasks);
     });
 
