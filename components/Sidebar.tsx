@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Sprint } from '@/types';
 import { format, parseISO } from 'date-fns';
 
@@ -11,12 +12,40 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ sprints, selectedSprintId, onSprintSelect, onCreateSprint }: SidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const activeSprints = sprints.filter(s => s.status === 'active');
   const completedSprints = sprints.filter(s => s.status === 'completed');
   const planningSprints = sprints.filter(s => s.status === 'planning');
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto">
+    <>
+      {/* Mobile toggle button */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+      >
+        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {isCollapsed ? (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          )}
+        </svg>
+      </button>
+
+      {/* Overlay for mobile */}
+      {!isCollapsed && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setIsCollapsed(true)}
+        />
+      )}
+
+      <div className={`
+        w-56 lg:w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto z-40
+        transition-transform duration-300 ease-in-out
+        ${isCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'}
+      `}>
       <div className="p-4 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-900">My Progress</h1>
         <p className="text-xs text-gray-500 mt-1">Sprint Dashboard</p>
@@ -128,6 +157,7 @@ export default function Sidebar({ sprints, selectedSprintId, onSprintSelect, onC
         </div>
       </div>
     </div>
+    </>
   );
 }
 

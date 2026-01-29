@@ -228,7 +228,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar
         sprints={sprints}
         selectedSprintId={selectedSprintId}
@@ -236,53 +236,57 @@ export default function Home() {
         onCreateSprint={handleCreateSprint}
       />
 
-      <div className="flex-1 ml-64 flex flex-col">
+      <div className="flex-1 ml-0 lg:ml-56 xl:ml-64 flex flex-col min-w-0">
         {/* Header */}
         <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-20">
-          <div className="px-6 py-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {currentSprint ? currentSprint.name : 'All Sprints'}
-              </h1>
-              {currentSprint && (
-                <p className="text-sm text-gray-600 mt-1">{currentSprint.goal}</p>
-              )}
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700">User:</label>
-                <input
-                  type="text"
-                  value={currentUser}
-                  onChange={(e) => {
-                    const newUser = e.target.value;
-                    setCurrentUser(newUser);
-                    setCurrentUserState(newUser);
-                  }}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
-                  placeholder="Your name"
-                />
+          <div className="px-4 lg:px-6 py-3 lg:py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="pl-12 lg:pl-0">
+                <h1 className="text-lg lg:text-2xl font-bold text-gray-900 truncate">
+                  {currentSprint ? currentSprint.name : 'All Sprints'}
+                </h1>
+                {currentSprint && (
+                  <p className="text-xs lg:text-sm text-gray-600 mt-1 truncate">{currentSprint.goal}</p>
+                )}
               </div>
-              {currentSprint && (
+              <div className="flex items-center gap-2 lg:gap-4 flex-wrap">
+                <div className="flex items-center gap-1 lg:gap-2">
+                  <label className="text-xs lg:text-sm text-gray-700 hidden sm:inline">User:</label>
+                  <input
+                    type="text"
+                    value={currentUser}
+                    onChange={(e) => {
+                      const newUser = e.target.value;
+                      setCurrentUser(newUser);
+                      setCurrentUserState(newUser);
+                    }}
+                    className="px-2 lg:px-3 py-1 border border-gray-300 rounded-lg text-xs lg:text-sm w-24 lg:w-auto"
+                    placeholder="Your name"
+                  />
+                </div>
+                {currentSprint && (
+                  <button
+                    onClick={handleGeneratePresentation}
+                    className="px-2 lg:px-4 py-1 lg:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-xs lg:text-sm whitespace-nowrap"
+                  >
+                    <span className="hidden sm:inline">📊 Generate Presentation</span>
+                    <span className="sm:hidden">📊</span>
+                  </button>
+                )}
                 <button
-                  onClick={handleGeneratePresentation}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="px-2 lg:px-4 py-1 lg:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-xs lg:text-sm whitespace-nowrap"
                 >
-                  📊 Generate Presentation
+                  <span className="hidden sm:inline">+ Create Card</span>
+                  <span className="sm:hidden">+ Card</span>
                 </button>
-              )}
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
-              >
-                + Create Card
-              </button>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Board */}
-        <main className="flex-1 overflow-x-auto p-6">
+        <main className="flex-1 overflow-auto p-3 lg:p-6">
           {selectedSprintId ? (
             <>
               {/* Sprint Metrics */}
@@ -291,22 +295,24 @@ export default function Home() {
               )}
 
               {/* Swim Lanes Board */}
-              <div className="flex gap-4 min-w-max mt-6">
-                {statusOrder.map(status => (
-                  <SwimLane
-                    key={status}
-                    status={status}
-                    tasks={tasksByStatus[status]}
-                    onCardClick={handleCardClick}
-                  />
-                ))}
+              <div className="overflow-x-auto pb-4">
+                <div className="flex gap-2 lg:gap-4 min-w-max">
+                  {statusOrder.map(status => (
+                    <SwimLane
+                      key={status}
+                      status={status}
+                      tasks={tasksByStatus[status]}
+                      onCardClick={handleCardClick}
+                    />
+                  ))}
+                </div>
               </div>
             </>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
-              <div className="text-center">
-                <p className="text-lg font-medium mb-2">Select a sprint to view the board</p>
-                <p className="text-sm">Choose a sprint from the sidebar to see tasks organized by status</p>
+              <div className="text-center px-4">
+                <p className="text-base lg:text-lg font-medium mb-2">Select a sprint to view the board</p>
+                <p className="text-xs lg:text-sm">Choose a sprint from the sidebar to see tasks organized by status</p>
               </div>
             </div>
           )}
