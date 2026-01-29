@@ -1,6 +1,7 @@
 'use client';
 
-import { SprintMetrics, Sprint } from '@/types';
+import type { SprintMetrics } from '@/types';
+import { Sprint } from '@/types';
 
 interface SprintMetricsProps {
   sprint: Sprint;
